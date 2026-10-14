@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Event Registration System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #ccc;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 11px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .event {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 7px;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Event Registration System</h1>
+
+    <!-- Create Event -->
+    <div class="card">
+
+        <h2>Create Event</h2>
+
+        <input
+            type="text"
+            id="eventName"
+            placeholder="Event Name"
+        >
+
+        <input
+            type="date"
+            id="eventDate"
+        >
+
+        <input
+            type="text"
+            id="eventLocation"
+            placeholder="Event Location"
+        >
+
+        <textarea
+            id="eventDescription"
+            placeholder="Event Description"
+        ></textarea>
+
+        <button type="button" id="createEventBtn">
+            Create Event
+        </button>
+
+    </div>
+
+
+    <!-- Available Events -->
+    <div class="card">
+
+        <h2>Available Events</h2>
+
+        <div id="events">
+            Loading events...
+        </div>
+
+    </div>
+
+
+    <!-- Registration -->
+    <div class="card">
+
+        <h2>Register for Event</h2>
+
+        <input
+            type="number"
+            id="eventId"
+            placeholder="Event ID"
+        >
+
+        <input
+            type="text"
+            id="name"
+            placeholder="Your Name"
+        >
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Email"
+        >
+
+        <input
+            type="text"
+            id="phone"
+            placeholder="Phone Number"
+        >
+
+        <button type="button" id="registerBtn">
+            Register
+        </button>
+
+        <p id="message"></p>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // -------------------------------
+    // CREATE EVENT
+    // -------------------------------
+
+    document
+        .getElementById("createEventBtn")
+        .addEventListener("click", async function () {
+
+            const name =
+                document.getElementById("eventName").value.trim();
+
+            const date =
+                document.getElementById("eventDate").value;
+
+            const location =
+                document.getElementById("eventLocation").value.trim();
+
+            const description =
+                document.getElementById("eventDescription").value.trim();
+
+
+            if (!name || !date || !location) {
+
+                alert(
+                    "Please fill Event Name, Date and Location"
+                );
+
+                return;
+            }
+
+
+            try {
+
+                const response = await fetch("/events", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        name: name,
+                        date: date,
+                        location: location,
+                        description: description
+
+                    })
+
+                });
+
+
+                const data = await response.json();
+
+
+                if (!response.ok) {
+
+                    alert(data.error || "Failed to create event");
+
+                    return;
+                }
+
+
+                alert(data.message);
+
+
+                // Clear form
+
+                document.getElementById("eventName").value = "";
+                document.getElementById("eventDate").value = "";
+                document.getElementById("eventLocation").value = "";
+                document.getElementById("eventDescription").value = "";
+
+
+                // Reload events
+
+                loadEvents();
+
+            }
+            catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Cannot connect to the backend."
+                );
+
+            }
+
+        });
+
+
+
+    // -------------------------------
+    // LOAD EVENTS
+    // -------------------------------
+
+    async function loadEvents() {
+
+        try {
+
+            const response =
+                await fetch("/events");
+
+
+            const events =
+                await response.json();
+
+
+            const eventsDiv =
+                document.getElementById("events");
+
+
+            eventsDiv.innerHTML = "";
+
+
+            if (events.length === 0) {
+
+                eventsDiv.innerHTML =
+                    "<p>No events available.</p>";
+
+                return;
+            }
+
+
+            events.forEach(function (event) {
+
+                eventsDiv.innerHTML += `
+
+                    <div class="event">
+
+                        <h3>${event.name}</h3>
+
+                        <p>
+                            <strong>Event ID:</strong>
+                            ${event.id}
+                        </p>
+
+                        <p>
+                            <strong>Date:</strong>
+                            ${event.date}
+                        </p>
+
+                        <p>
+                            <strong>Location:</strong>
+                            ${event.location}
+                        </p>
+
+                        <p>
+                            <strong>Description:</strong>
+                            ${event.description || ""}
+                        </p>
+
+                    </div>
+
+                `;
+
+            });
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            document.getElementById("events").innerHTML =
+                "<p>Unable to load events.</p>";
+
+        }
+
+    }
+
+
+
+    // -------------------------------
+    // REGISTER FOR EVENT
+    // -------------------------------
+
+    document
+        .getElementById("registerBtn")
+        .addEventListener("click", async function () {
+
+
+            const event_id =
+                document.getElementById("eventId").value;
+
+            const name =
+                document.getElementById("name").value.trim();
+
+            const email =
+                document.getElementById("email").value.trim();
+
+            const phone =
+                document.getElementById("phone").value.trim();
+
+
+            if (!event_id || !name || !email || !phone) {
+
+                document.getElementById("message").innerText =
+                    "Please fill all registration details.";
+
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch("/register", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            event_id: event_id,
+                            name: name,
+                            email: email,
+                            phone: phone
+
+                        })
+
+                    });
+
+
+                const data =
+                    await response.json();
+
+
+                document.getElementById("message").innerText =
+                    data.message || data.error;
+
+
+            }
+            catch (error) {
+
+                console.error(error);
+
+                document.getElementById("message").innerText =
+                    "Cannot connect to the backend.";
+
+            }
+
+        });
+
+
+
+    // Load events when page opens
+
+    loadEvents();
+
+</script>
+
+</body>
+</html>
